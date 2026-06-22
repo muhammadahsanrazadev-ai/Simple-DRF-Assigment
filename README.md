@@ -69,17 +69,58 @@ This keeps the API fast and non-blocking.
 | POST | `/api/auth/login/` | Login and get JWT tokens |
 | POST | `/api/auth/refresh/` | Refresh access token |
 
+### Request Examples
+
+**POST `/api/auth/login/`**
+```json
+{
+  "username": "john_doe",
+  "password": "Password123!"
+}
+```
+
+**POST `/api/auth/refresh/`**
+```json
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI..."
+}
+```
+
 ---
 
-## 👤 User Endpoints
+## 👤 User Endpoints (CRUD)
 
 | Method | Endpoint | Description |
 |------|---------|-------------|
-| POST | `/api/users/` | Create user (triggers Celery email) |
+| POST | `/api/users/` | Create user (Superuser only, triggers Celery email) |
 | GET | `/api/users/` | List all users |
 | GET | `/api/users/{id}/` | Retrieve user |
 | PATCH | `/api/users/{id}/` | Update user |
 | DELETE | `/api/users/{id}/` | Delete user |
+
+### Request Examples
+
+**POST `/api/users/` (Create User)**
+```json
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "password": "Password123!"
+}
+```
+
+**PATCH `/api/users/{id}/` (Update User)**
+```json
+{
+  "first_name": "Johnny",
+  "last_name": "Smith"
+}
+```
+*(Only include the fields you want to update)*
+
+*Note: `GET` (List & Retrieve) and `DELETE` requests do not require a request body.*
 
 ---
 
