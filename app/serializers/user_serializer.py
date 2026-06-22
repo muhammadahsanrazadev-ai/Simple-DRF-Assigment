@@ -2,6 +2,7 @@
 
 UserSerializer                  -> Read-only user representation.
 UserCreateSerializer            -> Create user with strong validation.
+UserUpdateSerializer            -> Update user details.
 CustomTokenObtainPairSerializer -> JWT login with input-level validation.
 """
 
@@ -23,6 +24,27 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "email", "first_name", "last_name", "is_active", "is_superuser", "date_joined"]
         read_only_fields = fields
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating user details."""
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email"]
+
+    def validate_email(self, value):
+        """Email: must be valid format and not already registered to another user."""
+        try:
+            django_validate_email(value)
+        except DjangoValidationError:
+            raise serializers.ValidationError("Enter a valid email address.")
+        
+        user = self.instance
+        if user and User.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError("This email is already in use.")
+        return value
+
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

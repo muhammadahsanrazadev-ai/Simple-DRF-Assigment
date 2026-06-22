@@ -1,14 +1,9 @@
 """URL routing for the app module."""
 
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
-from app.views.user_view import UserViewSet
-
-# Register UserViewSet under /api/users/
-router = DefaultRouter()
-router.register("users", UserViewSet, basename="user")
+from django.urls import path
+from app.views.user_view import UserListCreateAPIView, UserDetailAPIView
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("users/", UserListCreateAPIView.as_view(), name="user-list-create"),
+    path("users/<int:pk>/", UserDetailAPIView.as_view(), name="user-detail"),
 ]
