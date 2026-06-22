@@ -3,6 +3,9 @@
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -30,3 +33,31 @@ def send_welcome_email(user_id):
         recipient_list=[user.email],
         fail_silently=False,
     )
+
+@shared_task
+def send_email_update_notification(username, old_email, new_email):
+    """
+    Sends an email notification to the old email address informing the user
+    that their email address has been updated by an admin.
+    """
+    logger.info(f"Starting send_email_update_notification for {username} - Old Email: {old_email}, New Email: {new_email}")
+    try:
+        sent = send_mail(
+            subject="Security Alert: Your Email Has Been Updated",
+            message=(
+                f"Hi {username},\n\n"
+                "This is a security notification. An administrator has updated the email address "
+                f"associated with your account.\n\n"
+                f"Old Email: {old_email}\n"
+                f"New Email: {new_email}\n\n"
+                "If this was a mistake or you did not authorize this change, please contact support immediately.\n\n"
+                "— The Team"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[old_email],
+            fail_silently=False,
+        )
+        logger.info(f"Email sent successfully. Result: {sent}")
+    except Exception as e:
+        logger.error(f"Error sending email: {e}")
+        raise

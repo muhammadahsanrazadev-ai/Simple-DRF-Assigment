@@ -16,7 +16,7 @@ from app.serializers.user_serializer import (
     UserUpdateSerializer,
     CustomTokenObtainPairSerializer,
 )
-from app.tasks import send_welcome_email
+from app.tasks import send_welcome_email, send_email_update_notification
 
 
 from django.http import Http404
@@ -115,6 +115,7 @@ class UserDetailAPIView(generics.GenericAPIView):
 
     def _update(self, request, pk, partial):
         user_obj = self.get_object(pk, request.user)
+        old_email = user_obj.email
         
         # Use update serializer
         serializer = UserUpdateSerializer(user_obj, data=request.data, partial=partial)
@@ -124,7 +125,15 @@ class UserDetailAPIView(generics.GenericAPIView):
                 serializer.validated_data.pop("is_superuser", None)
                 serializer.validated_data.pop("is_staff", None)
                 
+            new_email = serializer.validated_data.get("email", old_email)
+            email_changed = (old_email != new_email)
+            
             updated_user = serializer.save()
+            
+            # Feature: Notify user if superuser changes their email
+            if email_changed and request.user.is_superuser and request.user.id != updated_user.id:
+                safe_enqueue(send_email_update_notification, updated_user.username, old_email, new_email)
+                
             # Return read-only serializer output after save
             return Response(UserSerializer(updated_user).data, status=status.HTTP_200_OK)
             
